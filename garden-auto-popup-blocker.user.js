@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         我的花园世界 - 自动推广弹窗屏蔽
 // @namespace    local.garden.popup-blocker
-// @version      1.0.0
+// @version      1.0.1
+// @updateURL    https://raw.githubusercontent.com/connjossy608/script/main/garden-auto-click.user.js
+// @downloadURL  https://raw.githubusercontent.com/connjossy608/script/main/garden-auto-click.user.js
 // @description  根据已分析的 game.js，阻止首页活动公告、每日卡包、首充及礼包促销自动弹出。
 // @match        https://www.wanyiwan.top/game/xjskp*
 // @match        https://www.wanyiwan.top/gameIframe*
