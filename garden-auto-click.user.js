@@ -1,39 +1,32 @@
 // ==UserScript==
-// @name         多点自动点击
+// @name         我的花园世界 - 多点自动点击
 // @namespace    local.garden.clicker
-// @version      1.3.3
-// @updateURL    none
-// @downloadURL  none
+// @version      1.3.4
+// @updateURL    https://raw.githubusercontent.com/connjossy608/script/main/garden-auto-click.user.js
+// @downloadURL  https://raw.githubusercontent.com/connjossy608/script/main/garden-auto-click.user.js
 // @description  多点顺序点击；坐标仅本次页面有效；支持延迟开始、限时运行与单按钮收起。
-// @match        https://*/*
-// @match        http://*/*
+// @match        https://www.wanyiwan.top/game/xjskp*
+// @match        https://www.wanyiwan.top/gameIframe*
 // @grant        GM_getValue
 // @grant        GM_setValue
-// @grant        GM_registerMenuCommand
 // @run-at       document-idle
 // ==/UserScript==
 (() => {
   'use strict';
   const CHANNEL = 'garden-click-bridge-v1';
-  const TARGET_KEY = 'clicker-local-target';
-  const localTarget = GM_getValue(TARGET_KEY, null);
-  if (window === window.top) {
-    GM_registerMenuCommand('在当前页面启用点击面板（仅本地）', () => {
-      GM_setValue(TARGET_KEY, { origin: location.origin, path: location.pathname });
-      location.reload();
-    });
-    GM_registerMenuCommand('取消绑定点击页面（仅本地）', () => {
-      GM_setValue(TARGET_KEY, null);
-      location.reload();
-    });
-  }
-  if (!localTarget || typeof localTarget.origin !== 'string' || typeof localTarget.path !== 'string') return;
-  const trustedOrigin = origin => origin === localTarget.origin;
-  const isGame = trustedOrigin(location.origin) && location.pathname === localTarget.path;
-  const hostedByGame = [...(location.ancestorOrigins || [])].some(trustedOrigin);
-  // 跨域 iframe 需要按其自身地址注入；其他顶层网页立即退出，不显示面板。
+  const GAME_ORIGIN = 'https://www.wanyiwan.top';
+  const GAME_PATH = '/game/xjskp';
+  const isGame = location.origin === GAME_ORIGIN && location.pathname === GAME_PATH;
+  // 游戏画布位于同源 /gameIframe 子页面，只在那里安装点击桥接，不显示第二个面板。
   if (window === window.top && !isGame) return;
-  if (window !== window.top && !hostedByGame) return;
+  if (window !== window.top) {
+    let hostedByGame = false;
+    try {
+      hostedByGame = window.top.location.origin === GAME_ORIGIN &&
+        window.top.location.pathname === GAME_PATH;
+    } catch { return; }
+    if (!hostedByGame || location.origin !== GAME_ORIGIN || location.pathname !== '/gameIframe') return;
+  }
   /** 将归一化坐标传入子页面，并等待回执。 */
   function forwardClick(frame, x, y, mode) {
     return new Promise((resolve, reject) => {
@@ -64,7 +57,7 @@
   if (window !== window.top) {
     window.addEventListener('message', async e => {
       const d=e.data;
-      if (e.source!==window.parent || !d || d.channel!==CHANNEL || d.type!=='click' || typeof d.id!=='string') return;
+      if (e.origin!==GAME_ORIGIN || e.source!==window.parent || !d || d.channel!==CHANNEL || d.type!=='click' || typeof d.id!=='string') return;
       if (!['pointer','mouse','touch'].includes(d.mode)) return;
       const result = {channel:CHANNEL,type:'result',id:d.id,error:null};
       try {
